@@ -31,7 +31,7 @@ kparoi = 205  # essayer avec cuivre aussi
 Tci = 215+273.15
 Tfi = [284.4, 257, 298]
 
-cp = np.array([])
+#si ajout eau
 #water_cst = Fluid(FluidsList.Water).dew_point_at_temperature(Tci).dew_point_at_pressure(101325).as_dict()
 #print(water_cst)
 
