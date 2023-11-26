@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as mpl
-import pyfluids
+from pyfluids import Fluid, FluidsList, HumidAir, InputHumidAir
 
 
 # Ua va varier et donc le NTU, optimiser l'efficacité
@@ -19,23 +19,48 @@ Tfin = [-16, 11, 25]  # froid, extérieur, celsius
 Tcin = 215  # chaud in, celsius
 mdotf = 3398  # m3/h, remettre en secondes, débit froid
 mdotc = 10194  # m3/h, remettre en secondes, débit chaud
-tparoi = .6*10**-3  # m
-nplaques = 200  # pour chaque écoulement
+tparoi = 0.6*10**-3  # m
+nplaques = 100  # pour chaque écoulement
 l = 1  # m
-w = .4  # m
+w = [1, 0.4]  # m [flux croise, contre-courant]
 tcanal = np.array([5*10**-3])  # faire varier
 kparoi = 205  # essayer avec cuivre aussi
 # calculer hauteur total des parois et plaques (avec n)
 
 
-# constantes pour l'air
-Tk = np.array([488, 284.4, 257, 298])
-cp = np.array([1027.8, 1006.7, 1006.1, 1007])
-mu = np.array([26.54*10**(-6), 17.68*10**(-6), 16.31*10**(-6), 18.36*10**(-6)])
-k = np.array([.03988, .02505, .02286, .02614])
-Pr = np.array([.6845, .7111, .7182, .7075])
-rho = np.array([0.7150, 1.2342, 1.3620, 1.1707]) # kg/m3
+Tci = 215+273.15
+Tfi = [284.4, 257, 298]
 
+cp = np.array([])
+#water_cst = Fluid(FluidsList.Water).dew_point_at_temperature(Tci).dew_point_at_pressure(101325).as_dict()
+#print(water_cst)
+
+Tcm = 178 # degrés C
+# valeurs pour nplaques = 100. Les constantes doivent être recalculées à chaque fois que les paramètres sont variés
+#Tfm = [93, 81, 99] # degrés C pour flux croise
+#Tfm = [97, 85, 102] # degrés C pour contre-courant
+Tfm = [95, 83, 100.5] # degrés C moyenne entre les deux configurations
+
+humid_air_c = [HumidAir().with_state(
+    InputHumidAir.altitude(80),
+    InputHumidAir.temperature(Tcm),
+    InputHumidAir.relative_humidity(0)).as_dict()]
+#print('air chaud', humid_air_c)
+
+humid_air_f = [HumidAir().with_state(
+    InputHumidAir.altitude(80),
+    InputHumidAir.temperature(i),
+    InputHumidAir.relative_humidity(50)).as_dict() for i in Tfm]
+#print('air froid', humid_air_f)
+
+
+# constantes pour l'air
+#Tk = np.array([488, 284.4, 257, 298])
+cp = k = np.array([i['specific_heat'] for i in (humid_air_c + humid_air_f)])
+mu = k = np.array([i['dynamic_viscosity'] for i in (humid_air_c + humid_air_f)])
+k = np.array([i['conductivity'] for i in (humid_air_c + humid_air_f)])
+Pr = np.array([i['prandtl'] for i in (humid_air_c + humid_air_f)])
+rho = np.array([i['density'] for i in (humid_air_c + humid_air_f)]) # kg/m3
 
 """a = np.array([1, 2, 3])
 b = np.array([4, 5, 6])
@@ -46,39 +71,56 @@ print(c[0,1])"""
 mdotc = mdotc/3600*rho[0]  # kg/s
 mdotf = mdotf/3600*rho[1]
 # print(deb)
-
-Ac = tcanal*l  # l'air chaud circule dans le sens de la longueur pour un transfert de chaleur maximal, quoique minime car 1373 en croisé vs 1375 pour conditions de base
-Af = tcanal*l
-Pc = 2*(tcanal+l)
-Pf = 2*(tcanal+l)
-Dhf = 4*Af/Pf
-Dhc = 4*Ac/Pc
 mdotf1 = mdotf/nplaques
 mdotc1 = mdotc/nplaques
-uf = mdotf1/rho[1]/Af
-uc = mdotc1/rho[0]/Ac
-ReDf = rho[1]*uf*Dhf/mu[1]
-ReDc = rho[0]*uc*Dhc/mu[0]
 
-print("ReD", ReDf, ReDc)  # 1311.26 pour le froid et 3767 pour le chaud, ce n'est pas turbulent assurément...
+for idx_w, width in enumerate(w):
+    Ac = tcanal*width  # l'air chaud circule dans le sens de la longueur pour un transfert de chaleur maximal, quoique minime car 1373 en croisé vs 1375 pour conditions de base
+    Af = tcanal*width
+    Pc = 2*(tcanal+l)
+    Pf = 2*(tcanal+l)
+    Dhf = 4*Af/Pf
+    Dhc = 4*Ac/Pc
 
-hf = k[1]*7.54/Dhf  # ce nusselt?
-hc = k[0]*7.54/Dhc  # idem
-U = (1/hc+1/hf+tparoi/kparoi)
-nparois = 2*nplaques-1
-Aparoi = nparois*w*l
-Cf = mdotf*cp[1]
-Cc = mdotc*cp[0]
-NTU = U*Aparoi/min(Cf, Cc)
-Cr = min(Cf, Cc)/max(Cf, Cc)
-arg = 1/Cr*NTU**.22*(np.exp(-Cr*NTU**.78)-1)
-Ecroise = 1-np.exp(arg)
-num = 1-np.exp(-NTU*(1-Cr))
-denom = 1-Cr*np.exp(-NTU*(1-Cr))
-Econtre = num/denom
-qcroise = Ecroise*min(Cf, Cc)*(Tk[0]-Tk[1])
-qcontre = Econtre*min(Cf, Cc)*(Tk[0]-Tk[1])
-print("q", qcroise, qcontre)  # 1375 pour le croisé vs 1384 avec conditions de base
+    for idx in range(0,3):
+        print('pour Tfi = ', Tfi[idx]-273)
+        uf = mdotf1/rho[idx+1]/Af
+        uc = mdotc1/rho[0]/Ac
+        ReDf = rho[idx+1]*uf*Dhf/mu[idx+1]
+        ReDc = rho[0]*uc*Dhc/mu[0]
+
+        print("ReD", ReDf, ReDc)  # 1311.26 pour le froid et 3767 pour le chaud, ce n'est pas turbulent assurément...
+
+        hf = k[idx+1]*7.54/Dhf  # ce nusselt?
+        hc = k[0]*7.54/Dhc  # idem
+        U = (1/hc+1/hf+tparoi/kparoi)**-1
+        nparois = 2*nplaques-1
+        Aparoi = nparois*width*l
+        Cf = mdotf*cp[idx+1]
+        Cc = mdotc*cp[0]
+        NTU = U*Aparoi/min(Cf, Cc)
+        Cr = min(Cf, Cc)/max(Cf, Cc)
+        if idx_w == 0 :
+            arg = 1/Cr*NTU**.22*(np.exp(-Cr*NTU**.78)-1)
+            Ecroise = 1-np.exp(arg)
+            q = Ecroise*min(Cf, Cc)*(Tci-Tfi[idx])
+            print("q croise", q)
+            
+        if idx_w == 1 :
+            num = 1-np.exp(-NTU*(1-Cr))
+            denom = 1-Cr*np.exp(-NTU*(1-Cr))
+            Econtre = num/denom
+            q = Econtre*min(Cf, Cc)*(Tci-Tfi[idx])
+            print("q contre", q)
+
+        Tco = Tci - q / Cc
+        Tfo = Tfi[idx] + q / Cf
+
+        print("Tco", Tco, 'K ', Tco-273.15, 'C')
+        print("Tfo", Tfo, 'K ', Tfo-273.15, 'C')
+
+        print('Tcm', (Tci + Tco)/2 -273.15)
+        print('Tfm', (Tfi[idx] + Tfo)/2 -273.15)
 
 # lorsque contre-courant avec circulation dans le sens de la largeur (w), on obtient 1384 W avec des ReD de 1311 et 1518
 # lorsque contre-courant avec circulation dans le sens de la longueur (l), on obtient 1374 W avec des ReD de 3254 et 3767
