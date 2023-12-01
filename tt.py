@@ -40,9 +40,18 @@ Tfi = [284.4, 257, 298]
 
 Tcm = [177, 175, 178] # degrés C
 # valeurs pour nplaques = 100. Les constantes doivent être recalculées à chaque fois que les paramètres sont variés
+#Tcm = 178 # degrés C
 #Tfm = [93, 81, 99] # degrés C pour flux croise
 #Tfm = [97, 85, 102] # degrés C pour contre-courant
 Tfm = [96, 84, 102] # degrés C moyenne entre les deux configurations
+
+#nplaques = 200
+#Tcm = 173 # pour flux croise
+#Tfm = [104, 93, 109] # degrés C pour flux croise
+#Tcm = 172  # pour contre-courant
+#Tfm = [109, 97, 114] # degrés C pour contre-courant
+Tcm = 172  # moyen
+Tfm = [106, 95, 111] # degrés C moyenne entre les deux configurations
 
 humid_air_c = [HumidAir().with_state(
     InputHumidAir.altitude(80),
