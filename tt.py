@@ -3,37 +3,22 @@ import matplotlib.pyplot as mpl
 from pyfluids import Fluid, FluidsList, HumidAir, InputHumidAir
 
 
-# Ua va varier et donc le NTU, optimiser l'efficacité
-# contre-courant (avec eau air)
-# maximiser surface d'échange
-# Voir scéarios plaques vs cylindre et comparer notament le volume de tels échangeurs pour une même efficacité
-# p.132-3 pour l'échangeur à plaques (flux croisé, pas complètement du contre-courant, tester les 2) (et circulaire voir problème 9.5)
-# on fera des graphiques pour maximiser et équilibrer chaque fonction des variables incertaines
-# calculer le minimum pour avoir un écoulement turbulent et maximiser le transfert (avec Re>10000, D petit)
-# tester pour inverser intérieur et extérieur dans le cylindre (hyp initiale, chaud au milieu)
-
-# efficacité de contre-courants : p.40
-
-
-Tfin = [-16, 11, 25]  # froid, extérieur, celsius
+Tfin = [11, -16, 25]  # froid, extérieur, celsius
 Tcin = 215  # chaud in, celsius
-mdotf = 3398  # m3/h, remettre en secondes, débit froid
-mdotc = 10194  # m3/h, remettre en secondes, débit chaud
+mdotf = 3398  # m3/h, débit froid
+mdotc = 10194  # m3/h, débit chaud
 tparoi = 0.6*(10**-3)  # m
-nplaques = np.arange(start=50, stop=305, step=5)  # pour chaque écoulement
-nb = len(nplaques)
-nplaques = np.vstack([nplaques]*3).transpose().reshape((nb, 3, 1))
+npl = np.arange(start=50, stop=305, step=5)  # pour chaque écoulement
+nb = len(npl)
+nplaques = np.vstack([npl]*3).transpose().reshape((nb, 3, 1))
 l = 1  # m
 w = [1, 0.4]  # m [flux croise, contre-courant]
-# tcanal = np.array([5*10**-3])  # faire varier
-# tcanal = np.linspace(3,15,50)*10**-3  # mm
-kparoi = 205  # alu, essayer avec cuivre aussi
-# calculer hauteur total des parois et plaques (avec n)
-# hauteur 2m
+kparoi = 205  # aluminium
+# kparoi = 388  # cuivre
+# on veut une hauteur de 2m
 tcanal = (2-(2*nplaques-1)*tparoi)/2/nplaques  # si n=300, on a 2.7 mm d'épaisseur de canal
 
-
-# flux à contre-courants
+# flux à contre-courants plus optimal qu'avec des flux croisés
 idx_w = 1
 width = w[idx_w]
 
@@ -44,30 +29,22 @@ Pf = 2*(tcanal+l)
 Dhf = 4*Af/Pf
 Dhc = 4*Ac/Pc
 
-
 Tci = 215+273.15
 Tfi = np.array([284.4, 257, 298])
-Tfi = np.vstack([Tfi]*nb).reshape((nb, 3, 1))  # 51 x 3 x 1
+Tfi = np.vstack([Tfi]*nb).reshape((nb, 3, 1))
 
-#si ajout eau
-#water_cst = Fluid(FluidsList.Water).dew_point_at_temperature(Tci).dew_point_at_pressure(101325).as_dict()
-#print(water_cst)
-
-Tcm = [177, 175, 178] # degrés C
-# valeurs pour nplaques = 100. Les constantes doivent être recalculées à chaque fois que les paramètres sont variés
-#Tcm = 178 # degrés C
-#Tfm = [93, 81, 99] # degrés C pour flux croise
-#Tfm = [97, 85, 102] # degrés C pour contre-courant
-Tfm = [96, 84, 102] # degrés C moyenne entre les deux configurations
+Tcm = [177, 175, 178] # degrés C, moyenne initiale entre l'entrée et la sortie d'air
+Tfm = [96, 84, 102] # degrés C, moyenne initiale entre l'entrée et la sortie d'air
 Tm = Tcm+Tfm
 Tmat = np.array(Tm*nb).reshape([nb, 6, 1])
 
 qmat = np.array([])
 Emat = np.array([])
+To = np.array([])
 
 for it in range(5):
-    lastf = Tmat[:,3:,-1]  # 51 x 3
-    lastc = Tmat[:,:3, -1]  # 51 x 3
+    lastf = Tmat[:,3:,-1]
+    lastc = Tmat[:,:3, -1]
     tempf = list(lastf.reshape((lastf.size)))
     tempc = list(lastc.reshape((lastc.size)))
 
@@ -88,50 +65,62 @@ for it in range(5):
     cpf = np.array([i['specific_heat'] for i in (humid_air_f)]).reshape(nb, 3, 1)
     cpc = np.array([i['specific_heat'] for i in (humid_air_c)]).reshape(nb, 3, 1)
     cp = np.hstack((cpc, cpf))
-    # mu = np.array([i['dynamic_viscosity'] for i in (humid_air_c + humid_air_f)])
     kf = np.array([i['conductivity'] for i in (humid_air_f)]).reshape(nb, 3, 1)
     kc = np.array([i['conductivity'] for i in (humid_air_c)]).reshape(nb, 3, 1)
     k = np.hstack((kc, kf))
-    # Pr = np.array([i['prandtl'] for i in (humid_air_c + humid_air_f)])
     rhof = np.array([i['density'] for i in (humid_air_f)]).reshape(nb, 3, 1)  # kg/m3
     rhoc = np.array([i['density'] for i in (humid_air_c)]).reshape(nb, 3, 1)  # kg/m3
 
-    mdotc = mdotc/3600*rhoc  # kg/s
-    mdotf = mdotf/3600*rhof  # 51 x 3 x 1
+    mc = mdotc/3600*rhoc  # kg/s
+    mf = mdotf/3600*rhof
 
-    hf = kf*7.54/Dhf  # 51 x 3 x 1
-    hc = kc*7.54/Dhc  # 51 x 3 x 1
-    U = 1/(1/hc+1/hf+tparoi/kparoi)  # 51 x 3 x 1
-    nparois = 2*nplaques-1  # 51 x 3 x 1
-    Aparoi = nparois*width*l  # 51 x 3 x 1
-    Cf = cpf*mdotf  # 51 x 3 x 1
-    Cc = cpc*mdotc  # 51 x 3 x 1
-    NTU = U*Aparoi/np.minimum(Cf, Cc)  # 51 x 3 x 1
-    Cr = np.minimum(Cf, Cc)/np.maximum(Cf, Cc)  # 51 x 3 x 1
+    hf = kf*7.54/Dhf
+    hc = kc*7.54/Dhc
+    u = 1/(1/hc+1/hf+tparoi/kparoi)
+    nparois = 2*nplaques-1
+    Aparoi = nparois*width*l
+    Cf = cpf*mf
+    Cc = cpc*mc
+    ntu = u*Aparoi/np.minimum(Cf, Cc)
+    Cr = np.minimum(Cf, Cc)/np.maximum(Cf, Cc)
 
     # pour les flux à contre-courants
-    num = 1-np.exp(-NTU*(1-Cr))   # 51 x 3 x 1
-    denom = 1-Cr*np.exp(-NTU*(1-Cr))  # 51 x 3 x 1
-    Econtre = num/denom  # 51 x 3 x 1
-    q = Econtre*np.minimum(Cf, Cc)*(Tci-Tfi)  # 51 x 3 x 1
-    if it == 0:
-        print(q)
+    num = 1-np.exp(-ntu*(1-Cr)) 
+    denom = 1-Cr*np.exp(-ntu*(1-Cr))
+    Econtre = num/denom
+    q = Econtre*np.minimum(Cf, Cc)*(Tci-Tfi)
     qmat = q
     Emat = Econtre
 
-    Tco = Tci - q / Cc  # 51 x 3 x 1
-    Tfo = Tfi + q / Cf  # 51 x 3 x 1
+    Tco = Tci - q / Cc
+    Tfo = Tfi + q / Cf
+    To = np.hstack((Tco, Tfo))-273.15
     Tcm = (Tci + Tco)/2 - 273.15
     Tfm = (Tfi + Tfo)/2 - 273.15
-    Tm = np.hstack((Tcm, Tfm))  # 51 x 6 x 1
-    Tmat = np.dstack((Tmat, Tm))  # 51 x 6 x 1+it
+    Tm = np.hstack((Tcm, Tfm))
+    Tmat = np.dstack((Tmat, Tm))
 
 
 for i in range(3):
-    mpl.plot(nplaques[:,0,0], Emat[:,i,0], "-", label=f'Tfi = {int(Tfi[0,i,0]-273.15)} \u2103')
+    mpl.plot(nplaques[:,0,0], Emat[:,i,0]*100, "-", label=f'Tfi = {int(Tfi[0,i,0]-273.15)} \u2103')
 
-    # on va choisir une efficacité minimale de 90%, qui est atteint avec plus de plaques pour les hautes températures
 
+# on va choisir une efficacité minimale de 90%, qui est atteint avec plus de plaques pour les hautes températures
+min11 = np.min(np.where(Emat[:,0,0]>.9))
+minf = np.min(np.where(Emat[:,1,0]>.9))
+minc = np.min(np.where(Emat[:,2,0]>.9))
+nind = max(min11, minf, minc)
+nfinal = npl[nind]
+print(nfinal, "plaques de chaque écoulement avec des parois d'aluminium")
+print("pour un total de", nfinal*2, "plaques")
+print(q[nind,:,0].round(0), 'W pour', Tfin, "\u2103 respectivement")
+print("To =", To[nind, :, 0].round(0), "\u2103")
+print("Tm =", Tm[nind, :, 0].round(0), "\u2103")
+
+mpl.axvline(x=nfinal, color='r', label="Atteinte d'une efficacité minimale de 90%")
+mpl.title("Efficacité de l'échangeur pour certaines températures caractéristiques de l'air froid entrant Tfi et avec des parois d'aluminium")
+mpl.xlabel("Nombre de plaques de chaque écoulement")
+mpl.ylabel("Efficacité de l'échangeur [%]")
 mpl.legend()
 mpl.grid()
-mpl.show()
+# mpl.show()
