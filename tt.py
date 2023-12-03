@@ -3,47 +3,51 @@ import matplotlib.pyplot as mpl
 from pyfluids import HumidAir, InputHumidAir
 
 
-Tfin = [11, -16, 25]  # froid, extérieur, celsius
-Tcin = 215  # chaud in, celsius
-mdotf = 3398  # m3/h, débit froid
-mdotc = 10194  # m3/h, débit chaud
-tparoi = 0.6*(10**-3)  # m
-npl = np.arange(start=50, stop=305, step=5)  # pour chaque écoulement
+Tfin = [11, -16, 25]  # Température de l'air extérieur (froid) [celsius]
+Tcin = 215  # Température de l'air chaud d'entrée [celsius]
+mdotf = 3398  # Débit de l'air froid [m3/h]
+mdotc = 10194  # Débit de l'air chaud [m3/h]
+tparoi = 0.6*(10**-3)  # Épaisseur d'une paroi de l'échangeur [m]
+npl = np.arange(start=50, stop=305, step=5)  # Nombre de plaques pour chaque écoulement
 nb = len(npl)
 nplaques = np.vstack([npl]*3).transpose().reshape((nb, 3, 1))
-l = 1  # m
-w = [1, 0.4]  # m [flux croise, contre-courant]
+l = 1  # Longueur des plaques [m]
+w = [1, 0.4]  # Largeur des plaques [m], sous le format [flux croise, contre-courant]
 kparoi = 205  # aluminium
 # kparoi = 388  # cuivre
 
 # on veut une hauteur de 2m
-tcanal = (2-(2*nplaques-1)*tparoi)/2/nplaques  # si n=300, on a 2.7 mm d'épaisseur de canal
+tcanal = (2-(2*nplaques-1)*tparoi)/2/nplaques  # si n = 300, on a 2.7 mm d'épaisseur de canal
 
-# flux à contre-courants plus optimal qu'avec des flux croisés
+# Les flux à contre-courants sont plus optimaux que les flux croisés.
 idx_w = 1
 width = w[idx_w]
 
-Ac = tcanal*width  # l'air chaud circule dans le sens de la longueur pour un transfert de chaleur maximal
-Af = tcanal*width
-Pc = 2*(tcanal+l)
-Pf = 2*(tcanal+l)
+# L'air chaud circule dans le sens de la longueur pour un transfert de chaleur maximal.
+Ac = tcanal*width  # Aire de l'écoulement chaud [m2]
+Af = tcanal*width  # Aire de l'écoulement froid [m2]
+Pc = 2*(tcanal+l)  # Périmètre de l'écoulement chaud [m]
+Pf = 2*(tcanal+l)  # Périmètre de l'écoulement froid [m]
 Dhf = 4*Af/Pf
 Dhc = 4*Ac/Pc
 
+# Températures chaudes et froides d'entrée [K]
 Tci = 215+273.15
 Tfi = np.array([284.4, 257, 298])
 Tfi = np.vstack([Tfi]*nb).reshape((nb, 3, 1))
 
-Tcm = [177, 175, 178] # degrés C, moyenne initiale entre l'entrée et la sortie d'air
-Tfm = [96, 84, 102] # degrés C, moyenne initiale entre l'entrée et la sortie d'air
+# Températures chaudes et froides moyennes entre les entrées et sorties d'air [celsius]
+Tcm = [177, 175, 178]
+Tfm = [96, 84, 102]
 Tm = Tcm+Tfm
 Tmat = np.array(Tm*nb).reshape([nb, 6, 1])
 
+# Initialisation des matrices de chaleur, d'efficacité et de températures de sortie de l'échangeur
 qmat = np.array([])
 Emat = np.array([])
 To = np.array([])
 
-for it in range(5):
+for it in range(5):  # itérations pour mieux estimer la température moyenne des écoulements
     lastf = Tmat[:,3:,-1]
     lastc = Tmat[:,:3, -1]
     tempf = list(lastf.reshape((lastf.size)))
@@ -62,18 +66,16 @@ for it in range(5):
     # print('air froid', humid_air_f)
 
 
-    # constantes pour l'air
+    # constantes pour l'air chaud et froid
     cpf = np.array([i['specific_heat'] for i in (humid_air_f)]).reshape(nb, 3, 1)
     cpc = np.array([i['specific_heat'] for i in (humid_air_c)]).reshape(nb, 3, 1)
-    cp = np.hstack((cpc, cpf))
     kf = np.array([i['conductivity'] for i in (humid_air_f)]).reshape(nb, 3, 1)
     kc = np.array([i['conductivity'] for i in (humid_air_c)]).reshape(nb, 3, 1)
-    k = np.hstack((kc, kf))
     rhof = np.array([i['density'] for i in (humid_air_f)]).reshape(nb, 3, 1)  # kg/m3
     rhoc = np.array([i['density'] for i in (humid_air_c)]).reshape(nb, 3, 1)  # kg/m3
 
     mc = mdotc/3600*rhoc  # kg/s
-    mf = mdotf/3600*rhof
+    mf = mdotf/3600*rhof  # kg/s
 
     hf = kf*7.54/Dhf
     hc = kc*7.54/Dhc
