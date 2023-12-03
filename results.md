@@ -1,10 +1,6 @@
-On garde uniquement le flux contre-courant qui est plus efficace pour toutes les températures d’entrée (pour 100 plaques de chaque écoulement et 5 mm d’épaisseur de canal)
+On garde uniquement le flux contre-courant qui est plus efficace pour toutes les températures d’entrée (pour 100 plaques de chaque écoulement et 5 mm d’épaisseur de canal) => référence rapide à l'ordre de grandeur des résultats sans plus
 
 ![contre vs croisé](/Users/justinemajor/Documents/Captures/Capture d’écran, le 2023-12-01 à 09.59.00.png)
-
-Après quelques itérations pour les contre-courants on retrouve les bonne températures moyennes froides et chaudes (pour 100 plaques de chaque écoulement et 5 mm d’épaisseur de canal)
-
-![itérations contre-courant](/Users/justinemajor/Documents/Captures/Capture d’écran, le 2023-12-01 à 10.15.46.png)
 
 Les dimensions de l'échangeur sont déterminées et sont de 1m x .40m x 2m. Les échangeurs à haute performance ont 90-95% d'efficacité et plus on ajoute de plaque, plus ça prend de force de pompage pour bouger l'air dans l'échangeur. on ne veut pas surestimer le nombre de plaques sinon ça va prendre énormément d'énergie de pompe juste pour faire circuler l'air et l'économie d'énergie devient alors moins intéressante. À partir de 90% aussi, la performance augmente très peu et le faible ajout de performance est teinté d'un cout d'achat vraiment plus élevé et de cout d'opération plus élevé.
 
