@@ -106,7 +106,7 @@ for it in range(5):  # itérations pour mieux estimer la température moyenne de
 
 
 for i in range(3):
-    mpl.plot(nplaques[:,0,0], Emat[:,i,0]*100, "-", label=f'Tfi = {int(Tfi[0,i,0]-273.15)} \u2103')
+    mpl.plot(npl, Emat[:,i,0]*100, "-", label=f'Tfi = {int(Tfi[0,i,0]-273.15)} \u2103')
 
 
 # on va choisir une efficacité minimale de 90%, qui est atteint avec plus de plaques pour les hautes températures
