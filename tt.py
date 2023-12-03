@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as mpl
-from pyfluids import Fluid, FluidsList, HumidAir, InputHumidAir
+from pyfluids import HumidAir, InputHumidAir
 
 
 Tfin = [11, -16, 25]  # froid, extérieur, celsius
@@ -15,6 +15,7 @@ l = 1  # m
 w = [1, 0.4]  # m [flux croise, contre-courant]
 kparoi = 205  # aluminium
 # kparoi = 388  # cuivre
+
 # on veut une hauteur de 2m
 tcanal = (2-(2*nplaques-1)*tparoi)/2/nplaques  # si n=300, on a 2.7 mm d'épaisseur de canal
 
