@@ -28,8 +28,8 @@ Ac = tcanal*width  # Aire de l'écoulement chaud [m2]
 Af = tcanal*width  # Aire de l'écoulement froid [m2]
 Pc = 2*(tcanal+l)  # Périmètre de l'écoulement chaud [m]
 Pf = 2*(tcanal+l)  # Périmètre de l'écoulement froid [m]
-Dhf = 4*Af/Pf
-Dhc = 4*Ac/Pc
+Dhf = 4*Af/Pf  # Diamètre hydraulique de l'air froid [m]
+Dhc = 4*Ac/Pc  # Diamètre hydraulique de l'air chaud [m]
 
 # Températures chaudes et froides d'entrée [K]
 Tci = 215+273.15
@@ -95,6 +95,7 @@ for it in range(5):  # itérations pour mieux estimer la température moyenne de
     qmat = q
     Emat = Econtre
 
+    # Matrices de températures
     Tco = Tci - q / Cc
     Tfo = Tfi + q / Cf
     To = np.hstack((Tco, Tfo))-273.15
