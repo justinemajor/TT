@@ -3,8 +3,8 @@ import matplotlib.pyplot as mpl
 from pyfluids import HumidAir, InputHumidAir
 
 
-Tfin = [11, -16, 25]  # Température de l'air extérieur (froid) [celsius]
-Tcin = 215  # Température de l'air chaud d'entrée [celsius]
+Tfin = [11, -16, 25]  # Température de l'air extérieur (froid) [°C]
+Tcin = 215  # Température de l'air chaud d'entrée [°C]
 mdotf = 3398  # Débit de l'air froid [m3/h]
 mdotc = 10194  # Débit de l'air chaud [m3/h]
 tparoi = 0.6*(10**-3)  # Épaisseur d'une paroi de l'échangeur [m]
@@ -13,8 +13,8 @@ nb = len(npl)
 nplaques = np.vstack([npl]*3).transpose().reshape((nb, 3, 1))
 l = 1  # Longueur des plaques [m]
 w = [1, 0.4]  # Largeur des plaques [m], sous le format [flux croise, contre-courant]
-kparoi = 205  # aluminium
-# kparoi = 388  # cuivre
+kparoi = 205  # Conductivité thermique de l'aluminium [W/mK]
+# kparoi = 398  # Conductivité thermique du cuivre [W/mK]
 
 # on veut une hauteur de 2m
 tcanal = (2-(2*nplaques-1)*tparoi)/2/nplaques  # si n = 300, on a 2.7 mm d'épaisseur de canal
@@ -36,7 +36,7 @@ Tci = 215+273.15
 Tfi = np.array([284.4, 257, 298])
 Tfi = np.vstack([Tfi]*nb).reshape((nb, 3, 1))
 
-# Températures chaudes et froides moyennes entre les entrées et sorties d'air [celsius]
+# Températures chaudes et froides moyennes entre les entrées et sorties d'air [°C]
 Tcm = [177, 175, 178]
 Tfm = [96, 84, 102]
 Tm = Tcm+Tfm

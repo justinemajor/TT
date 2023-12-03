@@ -16,7 +16,7 @@ Donc, on aura 160 plaques de chaque écoulement, pour un total de 320 plaques, c
 
 [183903 207813 172764] W pour [11, -16, 25] ℃ respectivement avec de l'aluminium comme paroi (6 mm) et pour le cuivre : [183904 207814 172766] W
 
-ça c’est avec de l’aluminium parce que finalement les deux matériaux donnent des résultats très semblables mais je pense que l’aluminium est plus courant, résistant et adapté (à vérifier + sources) #TODO
+ça c’est avec de l’aluminium parce que finalement les deux matériaux donnent des résultats très semblables mais je pense que l’aluminium est plus courant, résistant et adapté et moins cher
 
 Les températures de sorties et moyennes sont les suivantes pour l'aluminium : (seront utiles pour les analyses)
 
